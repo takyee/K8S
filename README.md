@@ -1,4 +1,4 @@
-# CentOS 8 K8S 安装步骤
+# CentOS8 &Ubuntu  K8s 安装步骤
 
 ## 一、CentOS
 
@@ -23,42 +23,138 @@ yum install https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm -y
 dnf --enablerepo=elrepo-kernel install kernel-lt
 ```
 
-#### 4.更新CentOS
+#### 5.Enabling TCP BBR in CentOS
+
+Open the following configuration file `vi /etc/sysctl.conf` to enable enable TCP BBR.
+
+```
+vi /etc/sysctl.conf
+```
+
+At the end of the config file, add the following lines.
+
+```
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+```
+
+Save the file, and refresh your configuration by using this command,
+
+```
+sysctl -p
+```
+
+#### 6.更新CentOS
 
 ```
 yum update -y
 ```
 
-## 二、Docker
 
-#### 1.Set up the repository
+
+## 二、Ubuntu 20.04
+
+1.选择 最小化安装
+
+2.升级系统
+
+```
+sudo apt update
+sudo apt upgrade
+```
+
+3.Enabling TCP BBR in Ubuntu
+
+Open the following configuration file `vi /etc/sysctl.conf` to enable enable TCP BBR.
+
+```
+vi /etc/sysctl.conf
+```
+
+At the end of the config file, add the following lines.
+
+```
+net.core.default_qdisc=fq
+net.ipv4.tcp_congestion_control=bbr
+```
+
+Save the file, and refresh your configuration by using this command,
+
+```
+sysctl -p
+
+```
+
+## 三、Docker
+
+#### 	1.Set up the repository (for CentOS)
 
 ```
 sudo yum install -y yum-utils
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 ```
 
-#### 2.Install Docker Engine
+#### 	1.1.Set up the repository (for Ubuntu)
+
+##### 		Uninstall old versions
+
+​		Older versions of Docker were called `docker`, `docker.io`, or `docker-engine`. If these are installed, uninstall them:
+
+```
+$ sudo apt-get remove docker docker-engine docker.io containerd runc
+```
+
+##### 		Set up the repository
+
+1. ###### Update the `apt` package index and install packages to allow `apt` to use a repository over HTTPS:
+
+   ```
+   $ sudo apt-get update
+   
+   $ sudo apt-get install \
+       ca-certificates \
+       curl \
+       gnupg \
+       lsb-release
+   ```
+
+2. ###### Add Docker’s official GPG key:
+
+   ```
+   $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg	
+   ```
+
+​	Use the following command to set up the **stable** repository. To add the **nightly** or **test** repository, add the word `nightly` or `test` (or both) after the word `stable` in the commands below. [Learn about **nightly** and **test** channels](https://docs.docker.com/engine/install/).
+
+```
+$ echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+Update the `apt` package index, and install the *latest version* of Docker Engine and containerd, or go to the next step to install a specific version:
+
+Install Docker Engine (for CentOS)
 
 ```
 sudo yum install docker-ce docker-ce-cli containerd.io
 ```
 
-#### 3.Start Docker
+#### 	3.Start Docker (for CentOS)
 
 ```
 sudo systemctl start docker
 ```
 
-#### 4.HTTP/HTTPS proxy (可选项)
+#### 	4.HTTP/HTTPS proxy (可选项)
 
-1).Create a systemd drop-in directory for the docker service:
+​	1).Create a systemd drop-in directory for the docker service:
 
 ```
 sudo mkdir -p /etc/systemd/system/docker.service.d
 ```
 
-2).Create a file named `/etc/systemd/system/docker.service.d/http-proxy.conf` that adds the `HTTP_PROXY` environment variable:
+​	2).Create a file named `/etc/systemd/system/docker.service.d/http-proxy.conf` that adds the `HTTP_PROXY` environment variable:
 
 ```
 [Service]
@@ -67,20 +163,20 @@ Environment="HTTPS_PROXY=http://proxy.example.com:443"
 Environment="NO_PROXY=localhost,127.0.0.1,docker-registry.example.com,.corp"
 ```
 
-3).Flush changes and restart Docker
+​	3).Flush changes and restart Docker
 
 ```
  sudo systemctl daemon-reload
  sudo systemctl restart docker
 ```
 
-4).Verify that the configuration has been loaded and matches the changes you made, for example:
+​	4).Verify that the configuration has been loaded and matches the changes you made, for example:
 
 ```
 sudo systemctl show --property=Environment docker
 ```
 
-#### 5.Kubernetes 国内镜像
+#### 	5.Kubernetes 国内镜像
 
 ```
 registry.aliyuncs.com/google_containers
@@ -110,7 +206,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
-## 三、Kubernetes
+## 四、Kubernetes
 
 #### 1.Letting iptables see bridged traffic
 
@@ -126,7 +222,7 @@ EOF
 sudo sysctl --system
 ```
 
-#### 2.Installing kubeadm, kubelet and kubectl
+#### 2.Installing kubeadm, kubelet and kubectl (For CentOS )
 
 ```
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
@@ -149,7 +245,67 @@ sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 sudo systemctl enable --now kubelet
 ```
 
-#### 3.获取kubeadm 默认配置文件
+**注意：因为安装Kubernetes需要从Google获取安装源，可以修改 /etc/yum.repos.d/kubernetes.repo，在文件添加 proxy=http://user:password@proxy.example.com:3128，即可单独为这个yum源添加代理。**
+
+##### 	For Ubuntu:
+
+1. ##### Update the `apt` package index and install packages needed to use the Kubernetes `apt` repository:
+
+   ```shell
+   sudo apt-get update
+   sudo apt-get install -y apt-transport-https ca-certificates curl
+   ```
+
+2. ##### Download the Google Cloud public signing key:
+
+   ```shell
+   sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+   ```
+
+   注意：curl 可以添加 --socks5 或者 proxy 参数，指定代理服务器下载
+
+3. ##### Add the Kubernetes `apt` repository:
+
+   ```shell
+   echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+   ```
+
+4. ##### Setup Proxy for APT
+
+   You will need to set up a proxy for APT if you want to install the package from the Ubuntu repository. You can do it by creating a new configuration file at /etc/apt/apt.conf.d/:
+
+   ```
+   nano /etc/apt/apt.conf.d/proxy.conf
+   ```
+
+   Add the following lines:
+
+   ```
+   Acquire::http::Proxy "http://username:password@proxy-server-ip:8181/";
+   Acquire::https::Proxy "http://username:password@proxy-server-ip:8182/";
+   ```
+
+   Save and close the file when you are finished. You can now install any packages from the Ubuntu repository in your system
+
+5. ##### Update `apt` package index, install kubelet, kubeadm and kubectl, and pin their version:
+
+   ```shell
+   sudo apt-get update
+   sudo apt-get install -y kubelet kubeadm kubectl
+   sudo apt-mark hold kubelet kubeadm kubectl
+   ```
+
+
+
+#### 3.Linux 系统中的 bash 自动补全功能
+
+```
+yum install bash-completion
+source /usr/share/bash-completion/bash_completion
+echo 'source <(kubectl completion bash)' >>~/.bashrc
+```
+
+#### 4.获取kubeadm 默认配置文件
 
 ```
 kubeadm config print init-defaults > init.yaml
@@ -158,7 +314,7 @@ kubeadm config print init-defaults > init.yaml
 
 修改init.yaml 中的 advertiseAddress 字段为 master 服务器的IP 地址
 
-#### 4.准备kubeadm config image镜像
+#### 5.准备kubeadm config image镜像
 
 ​	由于k8s.gcr.io 在大陆无法使用，registry.aliyuncs.com/google_containers 替代
 
@@ -168,17 +324,47 @@ kubeadm config print init-defaults > init.yaml
 
 ​	c. 使用ducker tag  修改 拉取回来的镜像的TAG为 k8s.gcr.io/xxx.x.x.xabc
 
-#### 5.Creating a cluster with kubeadm
+#### 6.Creating a cluster with kubeadm
 
 ```
 kubeadm init --config init.yaml
 ```
 
-## 四、Calico
+## 五、Calico
 
 #### 1.Install Calico networking and network policy for on-premises deployments
 
 ```
 curl https://docs.projectcalico.org/manifests/calico.yaml -O
 ```
+
+
+
+### 六、Node加入集群
+
+##### Node加入集群的语法：
+
+```bash
+kubeadm join --token <token> <control-plane-host>:<control-plane-port> --discovery-token-ca-cert-hash sha256:<hash>
+```
+
+##### 以下命令在控制节点输出 Node加入集群所需要的--token的值
+
+```bash
+kubeadm token list
+```
+
+##### 默认Token的值24小时有效，也可用使用下面的命令创建
+
+```
+kubeadm token create
+```
+
+##### 以下命令在控制节点输出 Node加入集群所需要的-discovery-token-ca-cert-hash 值
+
+```
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null |    openssl dgst -sha256 -hex | sed 's/^.* //'
+```
+
+
 
