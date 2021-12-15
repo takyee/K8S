@@ -283,7 +283,14 @@ sudo systemctl enable --now kubelet
    ```
    Acquire::http::Proxy "http://username:password@proxy-server-ip:8181/";
    Acquire::https::Proxy "http://username:password@proxy-server-ip:8182/";
+   Acquire::http::Proxy {
+       your.local.repository DIRECT; //请修改为不需要代理的repo源，例如cn.archive.ubuntu.com DIRECT;
+       your1.local.repository DIRECT;//请修改为不需要代理的repo源，例如download.docker.com DIRECT;
+       your2.local.repository DIRECT;//同上
+   };
    ```
+
+   
 
    Save and close the file when you are finished. You can now install any packages from the Ubuntu repository in your system
 
