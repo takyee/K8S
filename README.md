@@ -1,4 +1,4 @@
-# CentOS8 &Ubuntu  K8s 安装步骤
+# Kubernetes 笔记
 
 ## 一、CentOS
 
