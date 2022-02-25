@@ -373,5 +373,106 @@ kubeadm token create
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null |    openssl dgst -sha256 -hex | sed 's/^.* //'
 ```
 
+### 七、Ingress-nginx
 
+#### 安装 ingress
 
+   1)ingress 项目地址: https://kubernetes.github.io/ingress-nginx/
+
+   2)ingress 裸机部署模式: https://kubernetes.github.io/ingress-nginx/deploy/#bare-metal-clusters
+
+   3)下载裸机部署yaml文件 https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
+
+   4)启用hostNetwork的方法
+   ```
+   # 定义工作负载，名称为：ingress-nginx-controller（DaemonSet hostNetwork 模式下主要修改此段清单）
+# Source: ingress-nginx/templates/controller-deployment.yaml
+apiVersion: apps/v1
+kind: DaemonSet  # 将“Deployment”修改为“DaemonSet”
+metadata:
+  labels:
+    helm.sh/chart: ingress-nginx-3.34.0
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/version: 0.48.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: controller
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/instance: ingress-nginx
+      app.kubernetes.io/component: controller
+  revisionHistoryLimit: 10
+  minReadySeconds: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ingress-nginx
+        app.kubernetes.io/instance: ingress-nginx
+        app.kubernetes.io/component: controller
+    spec:
+      hostNetwork: true  # 启用主机网络
+      dnsPolicy: ClusterFirstWithHostNet  # 将“ClusterFirst”修改为“ClusterFirstWithHostNet”，使Nginx可以解析K8s集群内部名称
+      containers:
+        - name: controller
+          image: k8s.gcr.io/ingress-nginx/controller:v0.48.1@sha256:e9fb216ace49dfa4a5983b183067e97496e7a8b307d2093f4278cd550c303899
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /wait-shutdown
+          args:
+            - /nginx-ingress-controller
+            - --election-id=ingress-controller-leader
+            - --ingress-class=nginx
+            - --configmap=$(POD_NAMESPACE)/ingress-nginx-controller
+            - --validating-webhook=:8443
+            - --validating-webhook-certificate=/usr/local/certificates/cert
+            - --validating-webhook-key=/usr/local/certificates/key
+            - --report-node-internal-ip-address  # 报告ingress对象的ADDRESS状态
+   ```
+   #### Ingress示例
+   ```
+   apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-myservicea
+spec:
+  rules:
+  - host: myservicea.foo.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: myservicea
+            port:
+              number: 80
+  ingressClassName: nginx
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-myserviceb
+spec:
+  rules:
+  - host: myserviceb.foo.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: myserviceb
+            port:
+              number: 80
+  ingressClassName: nginx #这个字段非常重要，ingress-controler识别使用
+  ```
+关于 ingressClassName 官方的解释：
+
+Nginx is configured to automatically discover all ingress with the kubernetes.io/ingress.class: "nginx" annotation or where ingressClassName: nginx is present.
