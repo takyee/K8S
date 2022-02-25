@@ -473,6 +473,6 @@ spec:
               number: 80
   ingressClassName: nginx #这个字段非常重要，ingress-controler识别使用
   ```
-####关于 ingressClassName 官方的解释：
+#### 关于 ingressClassName 官方的解释：
 
 Nginx is configured to automatically discover all ingress with the kubernetes.io/ingress.class: "nginx" annotation or where ingressClassName: nginx is present.
