@@ -146,7 +146,7 @@ sudo yum install docker-ce docker-ce-cli containerd.io
 sudo systemctl start docker
 ```
 
-#### 	4.HTTP/HTTPS proxy (可选项)
+#### 	4.Docker 配置 HTTP/HTTPS proxy (可选项)
 
 ​	1).Create a systemd drop-in directory for the docker service:
 
