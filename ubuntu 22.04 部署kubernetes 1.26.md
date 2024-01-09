@@ -190,7 +190,7 @@ ctr version
 
 ```Bash
 sudo mkdir -p /etc/systemd/system/containerd.service.d
-sudo editor nano sudo mkdir -p /etc/systemd/system/containerd.service.d/proxy-http.conf
+sudo editor /etc/systemd/system/containerd.service.d/proxy-http.conf
 # 添加以下内容到配置文件 proxy-http.conf
 [Service]
 Environment="HTTP_PROXY=http://proxy.example.com:80"
