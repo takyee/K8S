@@ -255,7 +255,7 @@ kubeadm config print init-defaults   > ~/kubeadm.yaml
 ```
 修改kubeadm.yaml文件如下：
 ```yaml
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 bootstrapTokens:
 - groups:
   - system:bootstrappers:kubeadm:default-node-token
@@ -266,32 +266,55 @@ bootstrapTokens:
   - authentication
 kind: InitConfiguration
 localAPIEndpoint:
-  advertiseAddress: 10.10.100.151 # 设置Master服务器的IP地址
+  advertiseAddress: 10.10.100.5
   bindPort: 6443
 nodeRegistration:
   criSocket: unix:///var/run/containerd/containerd.sock
   imagePullPolicy: IfNotPresent
-  name: k8s01 # 设置Master服务器的名字
+  imagePullSerial: true
+  name: dgm-svcp01  
   taints: null
+timeouts:
+  controlPlaneComponentHealthCheck: 4m0s
+  discovery: 5m0s
+  etcdAPICall: 2m0s
+  kubeletHealthCheck: 4m0s
+  kubernetesAPICall: 1m0s
+  tlsBootstrap: 5m0s
+  upgradeManifests: 5m0s
 ---
 apiServer:
-  timeoutForControlPlane: 4m0s
-apiVersion: kubeadm.k8s.io/v1beta3
+  certSANs: ### certSANs用于为 Kubernetes API Server 的证书添加额外的主机名或 IP 地址，使得 API Server 的证书在通过这些域名/IP 访问时也能被视为“受信任”。                     
+    - dgm-svk8sapi.homag.com.cn
+    - dgm-svcp01
+    - dgm-svcp02
+    - dgm-svcp03
+    - 10.10.100.5
+    - 10.10.100.6
+    - 10.10.13.5
+    - 127.0.0.1
+apiVersion: kubeadm.k8s.io/v1beta4
+controlPlaneEndpoint: "dgm-svk8sapi.homag.com.cn:6443"  ### 高可用控制平面
+caCertificateValidityPeriod: 87600h0m0s ### kubernetes CA证书过期时间（默认10年）
+certificateValidityPeriod: 87600h0m0s ### 修改kubernetes服务器和各个组件证书过期时间修改为10年（默认8760h0m0s =1年）
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
 controllerManager: {}
 dns: {}
+encryptionAlgorithm: RSA-2048
 etcd:
   local:
     dataDir: /var/lib/etcd
-imageRepository: registry.k8s.io # 没有代理环境修改为registry.aliyuncs.com/google_containers 
+imageRepository: registry.k8s.io
 kind: ClusterConfiguration
-kubernetesVersion: 1.26.0  # 修改为当前的版本
+kubernetesVersion: 1.33.2  # 指定kubernetes版本
 networking:
   dnsDomain: cluster.local
-  serviceSubnet: 10.96.0.0/12
-  podSubnet: 10.244.0.0/16 # 指定pod ip的网段
+  serviceSubnet: 192.168.198.0/23 # service子网
+  podSubnet: 192.168.215.0/23  # Pod子网
+proxy: {}
 scheduler: {}
+
 ```
 拉取镜像： 
 
