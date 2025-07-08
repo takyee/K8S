@@ -284,7 +284,7 @@ timeouts:
   upgradeManifests: 5m0s
 ---
 apiServer:
-  certSANs: ### certSANs用于为 Kubernetes API Server 的证书添加额外的主机名或 IP 地址，使得 API Server 的证书在通过这些域名/IP 访问时也能被视为“受信任”。                     
+  certSANs: # certSANs用于为 Kubernetes API Server 的证书添加额外的主机名或 IP 地址，使得 API Server 的证书在通过这些域名/IP 访问时也能被视为“受信任”。                     
     - dgm-svk8sapi.homag.com.cn
     - dgm-svcp01
     - dgm-svcp02
@@ -295,8 +295,8 @@ apiServer:
     - 127.0.0.1
 apiVersion: kubeadm.k8s.io/v1beta4
 controlPlaneEndpoint: "dgm-svk8sapi.homag.com.cn:6443"  ### 高可用控制平面
-caCertificateValidityPeriod: 87600h0m0s ### kubernetes CA证书过期时间（默认10年）
-certificateValidityPeriod: 87600h0m0s ### 修改kubernetes服务器和各个组件证书过期时间修改为10年（默认8760h0m0s =1年）
+caCertificateValidityPeriod: 87600h0m0s # kubernetes CA证书过期时间（默认10年）
+certificateValidityPeriod: 87600h0m0s # 修改kubernetes服务器和各个组件证书过期时间修改为10年（默认8760h0m0s =1年）
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
 controllerManager: {}
