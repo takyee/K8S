@@ -1,4 +1,4 @@
-# Ubuntu 22.44部署kubernetes 1.26
+# Ubuntu 22.44部署kubernetes 1.33.2
 
 ## 环境准备
 
