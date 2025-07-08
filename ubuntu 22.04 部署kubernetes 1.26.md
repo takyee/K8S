@@ -660,5 +660,6 @@ kubeadm token list
 kubeadm token create
 
 #以下命令在控制节点输出 Node加入集群所需要的-discovery-token-ca-cert-hash 值
-openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null |    openssl dgst -sha256 -hex | sed 's
+openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+
 ```
